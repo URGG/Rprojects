@@ -1,0 +1,82 @@
+---
+title: "Visualization with ggplot2"
+author: "George Urgiles"
+date: "2025-02-10"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+we will be investigating the `diamonds` data-set throught this script
+
+```{r}
+
+install.packages("ggplot2", repos = "https://cloud.r-project.org")
+
+library(ggplot2)
+
+diamonds <- diamonds
+
+summary(diamonds)
+
+```
+
+```{r}
+#base plot against qplot for the same data
+plot(price ~ carat, data = diamonds, col = diamonds$color)
+qplot(carat, price, data = diamonds, colour = color)
+
+
+#we can change the shape using the "Shape" argument
+qplot(carat, price, data = diamonds, shape = cut)
+
+#can change the color of the data
+qplot(carat, price, data = diamonds, shape = cut, colour = color)
+
+#we want smooth lines to represent price against carat 
+qplot( carat, price, data = diamonds, colour = color, geom = "smooth")
+
+#box plot
+qplot( carat, price, data = diamonds, colour = color, geom = "boxplot")
+
+#jittering data will help us better see the distribution of highly overlapping data points
+qplot( color, price/carat, data = diamonds, geom = "jitter")
+
+#a histogram of carat, where bars will be colored according to the color of the diamond
+qplot( carat, data = diamonds, geom  = "histogram", fill = color)
+
+#the above histogram stacks freqs. from each color, making it kind of difficult to get the freqs. for each individual color.
+qplot(carat, data = diamonds, facets = .~color, geom = "histogram")
+
+#Starting to get fancy with facets
+qplot(carat,price, data = diamonds, colour = color, facets = . ~cut, geom = "smooth")
+
+
+```
+
+#Using ggplot
+```{r}
+p1 <- ggplot(data = diamonds, aes(x = carat, y = price, colour = cut)
+             
+p1 + geom_point()
+#add color as the shape
+p1 + geom_point(aes(shape = color))
+
+myBestFitLine <- geom_smooth(method = "lm", se = F, colour = alpha("steelblue", 0.5) linewidth = 2)
+
+p1 + geom_point() + myBestFitLine 
+
+
+```
+
+```{r}
+p1 <- gpplot(data = diamonds, aes(x = color, y = price))
+
+p1 + geom_boxplot()
+
+  ```
+
+
+
+

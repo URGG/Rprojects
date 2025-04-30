@@ -1,0 +1,32 @@
+---
+title: "Visulalization"
+author: "George Urgiles"
+date: "2025-02-07"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+#Using base R to visualize data quickly 
+
+```{r}
+titanic_data <- read.csv (file = "ttps://usfca.instructure.com/courses/1625173/files/73321125?module_item_id=18591995
+https://cdn.inst-fs-iad-prod.inscloudgate.net/5a55bcdb-ef07-4c6b-b3f1-ab7f6de995a2/titanic.csv?", header = TRUE)
+  
+head(titanic_data)  
+Str(titanic_data)
+summary(titanic_data)
+```
+```{r}
+#barplot for the sex of the passengers on the titanic
+
+plot(titanic_data$Sex)
+plot(y = titanic_data$Fare ~ x = titanic_data$Age, xlab = "Age",titanic_data
+ylab = "Fare", main = "Fare Agaisnt age of passenger")
+
+
+```
+
+
+

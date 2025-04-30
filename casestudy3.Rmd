@@ -1,0 +1,165 @@
+---
+title: "CaseStudy 3"
+author: "George Urgiles"
+date: "2025-04-14"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(ggplot2)
+```
+
+### Create and Shuffle a Deck
+```{r}
+create_deck <- function(num_decks = 1) {
+  values <- c(2:10, 10, 10, 10, 11)
+  deck <- rep(values, 4 * num_decks)
+  sample(deck)
+}
+```
+
+### Evaluate Hand Total (Soft/Hard Ace logic)
+```{r}
+get_hand_total <- function(hand) {
+  total <- sum(hand)
+  aces <- sum(hand == 11)
+  while (total > 21 && aces > 0) {
+    total <- total - 10
+    aces <- aces - 1
+    
+  }
+  return(total)
+}
+```
+
+### Dealer Logic (Hits until 17+)
+```{r}
+play_dealer <- function(deck) {
+  hand <- c(deck[1], deck[2])
+  deck <- deck[-c(1,2)]
+  total <- get_hand_total(hand)
+  while (total < 17) {
+    hand <- c(hand, deck[1])
+    deck <- deck[-1]
+    total <- get_hand_total(hand)
+  }
+  return(list(total = total, deck = deck))
+}
+```
+
+### Player Strategy 1: Basic (Soft/Hard )
+```{r}
+play_hand_strategy1 <- function(deck, dealer_card) {
+  hand <- c(deck[1], deck[2])
+  deck <- deck[-c(1,2)]
+  
+  while (TRUE) {
+    total <- get_hand_total(hand)
+    soft <- (11 %in% hand) && total <= 21
+
+    if (soft && total <= 17) {
+      hand <- c(hand, deck[1])
+      deck <- deck[-1]
+    } else if (!soft) {
+      if (total <= 11) {
+        hand <- c(hand, deck[1])
+        deck <- deck[-1]
+      } else if (total == 12 && dealer_card >= 4 && dealer_card <= 6) {
+        break
+      } else if (total >= 13 && total <= 16 && dealer_card >= 2 && dealer_card <= 6) {
+        break
+      } else if (total >= 17) {
+        break
+      } else {
+        hand <- c(hand, deck[1])
+        deck <- deck[-1]
+      }
+    } else {
+      break
+    }
+  }
+
+  return(list(total = get_hand_total(hand), deck = deck))
+}
+```
+
+### Player Strategy 2: Aggressive (Hit Until 18)
+```{r}
+play_hand_strategy2 <- function(deck) {
+  hand <- c(deck[1], deck[2])
+  deck <- deck[-c(1,2)]
+  total <- get_hand_total(hand)
+  while (total < 18) {
+    
+    hand <- c(hand, deck[1])
+    deck <- deck[-1]
+    total <- get_hand_total(hand)
+  }
+  return(list(total = total, deck = deck))
+}
+```
+
+### Simulate One Game Round
+```{r}
+simulate_game_compare <- function(num_players = 1, num_decks = 1, strategy = 1) {
+  deck <- create_deck(num_decks)
+  dealer_up_card <- deck[1]
+  dealer_hand <- c(dealer_up_card, deck[2])
+  deck <- deck[-c(1,2)]
+
+  player_totals <- numeric(num_players)
+  for (i in 1:num_players) {
+    if (strategy == 1) {
+      result <- play_hand_strategy1(deck, dealer_up_card)
+    } else {
+      result <- play_hand_strategy2(deck)
+    }
+    deck <- result$deck
+    player_totals[i] <- result$total
+  }
+
+  dealer_result <- play_dealer(c(dealer_hand, deck))
+  dealer_total <- dealer_result$total
+
+  wins <- sum(player_totals <= 21 & (dealer_total > 21 | player_totals > dealer_total))
+  return(wins / num_players)
+}
+```
+
+### Monte Carlo Simulation
+```{r}
+monte_carlo_compare <- function(num_trials = 1000, num_players = 1, num_decks = 1, strategy = 1) {
+  mean(replicate(num_trials, simulate_game_compare(num_players, num_decks, strategy)))
+  
+}
+```
+
+### Compare Strategy 1 vs 2
+```{r}
+set.seed(123)
+num_simulations <- 1000
+
+results_df <- data.frame(
+  Trial = 1:num_simulations,
+  Strategy1 = replicate(num_simulations, simulate_game_compare(100, 100, strategy = 1)),
+  Strategy2 = replicate(num_simulations, simulate_game_compare(100, 100, strategy = 2))
+)
+
+head(results_df)
+```
+
+
+```{r}
+results_long <- tidyr::pivot_longer(results_df, cols = c("Strategy1", "Strategy2"), 
+                                     names_to = "Strategy", values_to = "Win")
+
+ggplot(results_long, aes(x = Trial, y = Win, color = Strategy)) +
+  geom_col() +
+  geom_col(size = 1.5) +
+  labs(title = "Single-Hand Win Outcomes Over 100 Trials",
+       x = "Trial Number", y = "Win (1 = Win, 0 = Loss)") +
+  theme_minimal()
+  
+  
+```

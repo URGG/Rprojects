@@ -1,0 +1,54 @@
+---
+title: "Data frames & Lists"
+author: "George Urgiles"
+date: "2025-02-03"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#Data frame is a lsit with equal-length vectors 
+*Data frames are tables where*
+Columns = measuremtns/variables/features
+Rows = observations 
+*Each columns can be of a differnt type of data*
+```{r}
+ToothGrowth
+
+str(ToothGrowth)
+summary(ToothGrowth)
+
+```
+
+```{r}
+my_first_data_frame <- data.frame(chars =c("column", "1"), nums = c(2.15, 3.18))
+
+str(my_first_data_frame)
+```
+
+#Subsetting data Frams 
+one can use the same thing for matricies 
+
+```{r}
+my_frist_data_frame[2,1]]
+
+my_first_data_frame$chars[1]\
+
+#Look at the data set 
+
+data1 <- mtcars
+
+```
+
+#For prettry myuch anyting else, we can use the same fucntions that we did with matriceis regarding mathematical opearations 
+
+
+*Lists*
+
+```{r}
+
+```
+
+

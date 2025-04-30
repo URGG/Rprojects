@@ -1,0 +1,106 @@
+---
+title: "VECTORS & MATRICIES"
+author: "George Urgiles"
+date: "2025-01-29"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+logical_vector <-(TRUE, TRUE, F, F ,T, F)
+```
+
+```{r}
+myAtomicVector <- c(1,2,3,4,-99,5,4,22.223)
+
+myAtomicVector[c(1,3,7,9)]
+```
+'seq' and 'rep' fucntions. And we can also use 'x:y' to give vectors that increase by 1 from x to y 
+```{r}
+evens <- seq(from = 2, to = 100, by = 2)
+```
+#rand subset from numbers 1 - 100 
+```{r}
+rand_subset <- sample(x = 1:100, size = 20)
+```
+
+
+```{r}
+set.seed(123)
+rand_subset <- sample(x = 1:100, size = 20)
+```
+#repeating nums
+```{r}
+two_evens <- rep(evens, times = 2 )
+
+
+evens_and_odds <- c(evns, odd)
+
+tail(two_evens)
+
+```
+
+```{r}
+x <- 1:10
+y <- 11:20
+
+x + y
+x/y
+x*y
+x - y
+x^2
+sqrt(x)
+log(x)
+
+```
+```{r}
+
+X_array[, c(1,3), 2 ]
+
+```
+# Fucntions thats work on vectors matriceis and arrays
+```{r}
+x <- rep (2, 5)
+sum(x)
+mean(x)
+min(x)
+y < -c( 1:5,-2, 10)
+min(y)
+max(y)
+which.min(y) #the index of the minimum value of y
+which.max(y)
+
+# waht about missing data 
+z <- y
+z[4] <- NA
+
+sum(z)
+```
+
+#how do we check weather each entry is unique?
+table(x)
+table(y)
+summary(z)
+
+
+
+**Sums and means of matricies**
+
+```{r}
+meam(X) #give the overall mean of every entry in X
+rowMeans(x)#give the means of each row in x
+colMeans(x)#gives the mean of the columns
+
+#we can always add in the ar na.rm = True to make sure that we don't get an NA 
+
+sum(X)
+rowSums(X)
+colSums(X)
+
+```
+
+
