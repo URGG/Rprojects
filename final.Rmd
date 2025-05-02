@@ -1,0 +1,149 @@
+---
+title: "Heart Attack Risk Prediction: Case Study"
+author: "George Urgiles"
+date: "`r Sys.Date()`"
+output: html_document
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+```
+
+## Introduction
+
+This case study analyzes patient health data to predict heart attack risk levels using machine learning models in R.
+
+## Set Mirror and Load Required Libraries
+
+```{r set-mirror}
+# Set CRAN mirror to avoid manual selection
+options(repos = c(CRAN = "https://cran.rstudio.com/"))
+```
+
+```{r load-libraries}
+library(tidyverse)      
+library(caret)          
+library(corrplot)       
+library(nnet)           
+library(rpart.plot)     
+library(randomForest)   
+```
+
+## Load and Inspect the Dataset
+
+```{r load-data}
+# Load the dataset from CSV
+data <- read.csv("H://Heart_Attack_Risk_Levels_Dataset.csv")
+
+
+# Check the column names and basic structure
+colnames(data)
+str(data)
+summary(data)
+```
+*We check the column names to confirm what variables are available and their types.*
+
+## Data Cleaning
+
+```{r clean-data}
+# Check for missing values
+colSums(is.na(data))
+
+# Convert categorical variables to factors
+data$Gender <- as.factor(data$Gender)
+data$Risk_Level <- as.factor(data$Risk_Level)
+```
+*We ensure categorical variables like Gender and Risk_Level are treated as factors, which is necessary for modeling.*
+
+
+
+### Plot: Risk Level Distribution
+
+```{r risk-distribution}
+ggplot(data, aes(x = Risk_Level, fill = Risk_Level)) +
+  geom_bar() +
+  labs(title = "Distribution of Heart Attack Risk Levels", x = "Risk Level", y = "Count") +
+  theme_minimal()
+```
+*This bar chart shows how many cases fall into each heart attack risk category.*
+
+### Plot: Age Distribution by Risk Level
+
+```{r boxplot-age}
+ggplot(data, aes(x = Risk_Level, y = Age, fill = Risk_Level)) +
+  geom_boxplot() +
+  labs(title = "Age by Risk Level", x = "Risk Level", y = "Age") +
+  theme_minimal()
+```
+*Boxplots reveal how age differs across the risk categories.*
+
+### Correlation Heatmap (Numeric Variables)
+
+```{r correlation-heatmap}
+numeric_data <- data %>% select_if(is.numeric)
+cor_matrix <- cor(numeric_data)
+corrplot(cor_matrix, method = "color", type = "upper", tl.cex = 0.8)
+```
+*We plot correlations between numeric variables to see if any are strongly related.*
+
+## Split Data: Training and Test Sets
+
+```{r train-test-split}
+set.seed(123)
+index <- createDataPartition(data$Risk_Level, p = 0.7, list = FALSE)
+train <- data[index, ]
+test <- data[-index, ]
+```
+*We split 70% of the data into a training set and keep 30% as the test set.*
+
+## Model 1: Logistic Regression
+
+```{r logistic-regression}
+# Train multinomial logistic regression model
+log_model <- train(Risk_Level ~ ., data = train, method = "multinom", trace = FALSE)
+
+# Make predictions and evaluate
+log_preds <- predict(log_model, test)
+confusionMatrix(log_preds, test$Risk_Level)
+```
+*This model uses logistic regression to classify the risk levels. We evaluate it with a confusion matrix.*
+
+## Model 2: Decision Tree
+
+```{r decision-tree}
+# Train a decision tree model
+tree_model <- train(Risk_Level ~ ., data = train, method = "rpart")
+
+# Visualize the tree
+rpart.plot(tree_model$finalModel, main = "Decision Tree")
+
+# Make predictions and evaluate
+tree_preds <- predict(tree_model, test)
+confusionMatrix(tree_preds, test$Risk_Level)
+```
+*We build and plot a decision tree and assess its performance on the test set.*
+
+## Model 3: Random Forest
+
+```{r random-forest}
+# Train a random forest model
+rf_model <- train(Risk_Level ~ ., data = train, method = "rf", ntree = 100)
+
+# Make predictions and evaluate
+rf_preds <- predict(rf_model, test)
+confusionMatrix(rf_preds, test$Risk_Level)
+```
+*The random forest model typically improves accuracy by combining multiple decision trees.*
+
+## Feature Importance (Random Forest)
+
+```{r feature-importance}
+varImpPlot(rf_model$finalModel, main = "Feature Importance: Random Forest")
+```
+*This plot shows which variables contribute most to the random forest's predictions.*
+
+## Conclusion (Code-Focused)
+
+We trained and evaluated logistic regression, decision tree, and random forest models to predict heart attack risk levels. The confusion matrices show how well each model performed, and the feature importance plot highlights the most influential predictors.
+
