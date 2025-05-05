@@ -69,8 +69,8 @@ table(data$risk_level)
 prop.table(table(data$risk_level))
 ```
 
-## A pca plot a scatter plot used to visualize high-dimensional data by reducing it to two dimensions, typically using the first two principal components
-##information accured from https://cran.r-project.org/web/packages/ggfortify/vignettes/plot_pca.html
+## A PCA plot, a scatter plot used to visualize high-dimensional data by reducing it to two dimensions, typically using the first two principal components
+##information acquired from https://cran.r-project.org/web/packages/ggfortify/vignettes/plot_pca.html
 
 ```{r pca-plot}
 pca_data <- prcomp(numeric_data, scale. = TRUE)
