@@ -1,149 +1,134 @@
 ---
 title: "Heart Attack Risk Prediction: Case Study"
 author: "George Urgiles"
-date: "`r Sys.Date()`"
+date: "Spring 2025"
 output: html_document
-
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 ```
 
-## Introduction
-
-This case study analyzes patient health data to predict heart attack risk levels using machine learning models in R.
-
-## Set Mirror and Load Required Libraries
-
-```{r set-mirror}
-# Set CRAN mirror to avoid manual selection
-options(repos = c(CRAN = "https://cran.rstudio.com/"))
-```
+# Load Libraries
 
 ```{r load-libraries}
-library(tidyverse)      
-library(caret)          
-library(corrplot)       
-library(nnet)           
-library(rpart.plot)     
-library(randomForest)   
+library(tidyverse)
+library(caret)
+library(rpart)
+library(rpart.plot)
+library(randomForest)
+library(janitor)
+library(corrplot)
+library(ggfortify)
 ```
 
-## Load and Inspect the Dataset
+# Load & Clean Data
 
 ```{r load-data}
-# Load the dataset from CSV
-data <- read.csv("H://Heart_Attack_Risk_Levels_Dataset.csv")
-
-
-# Check the column names and basic structure
-colnames(data)
-str(data)
-summary(data)
+set.seed(123)
+data <- read.csv("Heart_Attack_Risk_Levels_Dataset.csv")
+data <- data %>% clean_names()
+data <- data %>%
+  mutate(
+    gender = factor(gender, labels = c("Male", "Female")),
+    risk_level = as.factor(risk_level)
+  )
+glimpse(data)
+sum(is.na(data))
 ```
-*We check the column names to confirm what variables are available and their types.*
 
-## Data Cleaning
+# Descriptive Statistics
 
-```{r clean-data}
-# Check for missing values
-colSums(is.na(data))
-
-# Convert categorical variables to factors
-data$Gender <- as.factor(data$Gender)
-data$Risk_Level <- as.factor(data$Risk_Level)
+```{r summary-stats}
+data %>% summary()
 ```
-*We ensure categorical variables like Gender and Risk_Level are treated as factors, which is necessary for modeling.*
 
+# Correlation Matrix for Numeric Features
 
-
-### Plot: Risk Level Distribution
-
-```{r risk-distribution}
-ggplot(data, aes(x = Risk_Level, fill = Risk_Level)) +
-  geom_bar() +
-  labs(title = "Distribution of Heart Attack Risk Levels", x = "Risk Level", y = "Count") +
-  theme_minimal()
+```{r correlation-matrix}
+numeric_data <- data %>% select(where(is.numeric))
+corrplot(cor(numeric_data), method = "color", tl.cex = 0.7)
 ```
-*This bar chart shows how many cases fall into each heart attack risk category.*
 
-### Plot: Age Distribution by Risk Level
+# Boxplots for Key Variables
 
-```{r boxplot-age}
-ggplot(data, aes(x = Risk_Level, y = Age, fill = Risk_Level)) +
+```{r boxplots}
+ggplot(data, aes(x = risk_level, y = troponin)) +
   geom_boxplot() +
-  labs(title = "Age by Risk Level", x = "Risk Level", y = "Age") +
-  theme_minimal()
+  labs(title = "Troponin Levels by Risk Level")
+
+ggplot(data, aes(x = risk_level, y = ck_mb)) +
+  geom_boxplot() +
+  labs(title = "CK-MB Levels by Risk Level")
 ```
-*Boxplots reveal how age differs across the risk categories.*
 
-### Correlation Heatmap (Numeric Variables)
+# Explore Class Imbalance
 
-```{r correlation-heatmap}
-numeric_data <- data %>% select_if(is.numeric)
-cor_matrix <- cor(numeric_data)
-corrplot(cor_matrix, method = "color", type = "upper", tl.cex = 0.8)
+```{r class-imbalance}
+table(data$risk_level)
+prop.table(table(data$risk_level))
 ```
-*We plot correlations between numeric variables to see if any are strongly related.*
 
-## Split Data: Training and Test Sets
+## A pca plot a scatter plot used to visualize high-dimensional data by reducing it to two dimensions, typically using the first two principal components
+##information accured from https://cran.r-project.org/web/packages/ggfortify/vignettes/plot_pca.html
+
+```{r pca-plot}
+pca_data <- prcomp(numeric_data, scale. = TRUE)
+autoplot(pca_data, data = data, colour = 'risk_level')
+```
+
+# Train/Test Split
 
 ```{r train-test-split}
-set.seed(123)
-index <- createDataPartition(data$Risk_Level, p = 0.7, list = FALSE)
-train <- data[index, ]
-test <- data[-index, ]
+train_index <- createDataPartition(data$risk_level, p = 0.7, list = FALSE)
+train_data <- data[train_index, ]
+test_data <- data[-train_index, ]
 ```
-*We split 70% of the data into a training set and keep 30% as the test set.*
 
-## Model 1: Logistic Regression
+# Logistic Regression
 
 ```{r logistic-regression}
-# Train multinomial logistic regression model
-log_model <- train(Risk_Level ~ ., data = train, method = "multinom", trace = FALSE)
-
-# Make predictions and evaluate
-log_preds <- predict(log_model, test)
-confusionMatrix(log_preds, test$Risk_Level)
+log_model <- train(
+  risk_level ~ ., data = train_data,
+  method = "multinom",
+  trControl = trainControl(method = "cv", number = 5)
+)
+log_pred <- predict(log_model, test_data)
+confusionMatrix(log_pred, test_data$risk_level)
 ```
-*This model uses logistic regression to classify the risk levels. We evaluate it with a confusion matrix.*
 
-## Model 2: Decision Tree
+# Decision Tree
 
 ```{r decision-tree}
-# Train a decision tree model
-tree_model <- train(Risk_Level ~ ., data = train, method = "rpart")
-
-# Visualize the tree
-rpart.plot(tree_model$finalModel, main = "Decision Tree")
-
-# Make predictions and evaluate
-tree_preds <- predict(tree_model, test)
-confusionMatrix(tree_preds, test$Risk_Level)
+tree_model <- rpart(risk_level ~ ., data = train_data, method = "class")
+rpart.plot(tree_model, type = 2, extra = 104, fallen.leaves = TRUE)
+tree_pred <- predict(tree_model, test_data, type = "class")
+confusionMatrix(tree_pred, test_data$risk_level)
 ```
-*We build and plot a decision tree and assess its performance on the test set.*
 
-## Model 3: Random Forest
+# Random Forest
 
 ```{r random-forest}
-# Train a random forest model
-rf_model <- train(Risk_Level ~ ., data = train, method = "rf", ntree = 100)
-
-# Make predictions and evaluate
-rf_preds <- predict(rf_model, test)
-confusionMatrix(rf_preds, test$Risk_Level)
+rf_model <- randomForest(risk_level ~ ., data = train_data, importance = TRUE, ntree = 500)
+rf_pred <- predict(rf_model, test_data)
+confusionMatrix(rf_pred, test_data$risk_level)
+varImpPlot(rf_model)
 ```
-*The random forest model typically improves accuracy by combining multiple decision trees.*
 
-## Feature Importance (Random Forest)
+# Model Comparison
 
-```{r feature-importance}
-varImpPlot(rf_model$finalModel, main = "Feature Importance: Random Forest")
+```{r model-comparison}
+results <- data.frame(
+  Model = c("Logistic Regression", "Decision Tree", "Random Forest"),
+  Accuracy = c(
+    confusionMatrix(log_pred, test_data$risk_level)$overall['Accuracy'],
+    confusionMatrix(tree_pred, test_data$risk_level)$overall['Accuracy'],
+    confusionMatrix(rf_pred, test_data$risk_level)$overall['Accuracy']
+  )
+)
+print(results)
 ```
-*This plot shows which variables contribute most to the random forest's predictions.*
 
-## Conclusion (Code-Focused)
+# Conclusion
 
-We trained and evaluated logistic regression, decision tree, and random forest models to predict heart attack risk levels. The confusion matrices show how well each model performed, and the feature importance plot highlights the most influential predictors.
-
+We explored and modeled heart attack risk levels using logistic regression, decision trees, and random forests. We enhanced exploration with correlation plots, boxplots, and PCA to visualize data distribution. Random forests typically performed best, underlining the importance of key biomarkers like Troponin and CK-MB. Future work can include advanced tuning or deeper medical insights.
